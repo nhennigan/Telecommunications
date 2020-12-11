@@ -9,7 +9,7 @@ import random
 #offered traffic
 Ao = 25
 #max number of calls handled
-n = 2
+n = 30
 bottom_range = 10
 top_range = 30
 
@@ -82,41 +82,37 @@ call_dict2 = {
 dropped_calls={}
 skip_because_dropped=[]
 #print("len call dict %d"%len(call_dict))
-while time < 36:
+while time < 3600:
     #print("sim calls %s"%simultaneous_calls)
-    for call in call_dict2.items():
+    for call in call_dict.items():
         #print(call)
         # for call_start_time, call_length in call.items():
             # #print(call_start_time[0])
         # print(call[0])
         # print(call[1])
         if call[0] == time:
-            print("got to true")
+            #print("got to true")
             if simultaneous_calls < n:
-                print("adding one to the pack")
+                #print("adding one to the pack")
                 simultaneous_calls +=1
             else:
                 print("Max number of calls reached")
                 dropped_calls.update({call[0]:call[1]})
                 skip_because_dropped.append(call[0])
                 #call_dict.popitem()
-                #continue
-        print("skip list")
-        print(skip_because_dropped)
+                #print("skip list")
+                #print(skip_because_dropped)
 
         if (call[1] + call[0]) == time:
-            print("got to second end time check")
+            #print("got to second end time check")
+            #print(call[0] in skip_because_dropped)
             if call[0] in skip_because_dropped:
-                "this call was not made in the first place"
+                #print("this call was not made in the first place")
                 continue
-                simultaneous_calls -=1
-            print("call ended")
+            simultaneous_calls -=1
+            #print("call ended")
             
-    print("number of calls at %d seconds: %d"%(time,simultaneous_calls))
-            # #print(call)
-            # # print(call[0])
-            # # print(call[1])
-            # # print(call.values())
+    #print("number of calls at %d seconds: %d"%(time,simultaneous_calls))
     time +=1  
 print("number of calls at %d seconds: %d"%(time,simultaneous_calls))
 #print("len call dict after %d"%len(call_dict))
