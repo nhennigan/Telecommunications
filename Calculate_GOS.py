@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import pandas as pd 
 import numpy as np
 import random
+import math
 
 #offered traffic
 Ao = 25
@@ -15,18 +16,32 @@ top_range = 40
 
 numValues = 1000
 maxValue = 3600
-skewness = 0.4
-#mean = 15
+skewness = 0.5
 
 average_no_calls=99
 std_deviation = 55
 #max_calls=160
 
-# no_calls = np.random.normal(average_no_calls,std_deviation)
+
 # print(no_calls)
 
 def create_random_variables():
+
+    # phi = (std_deviation ** 2 + average_no_calls **2)
+    # mu = np.log(average_no_calls **2 / phi)
+    # sigma = (np.log(phi **2/ average_no_calls **2)) **0.5
+    # generated_pop = np.random.lognormal(mu,sigma,10000)
+
+    # generated_pop = generated_pop - min(generated_pop)
+    # generated_pop = generated_pop / max(generated_pop)
+    # generated_pop = generated_pop * maxValue   
+
+
+    # bins = np.arange(0,51,1)
+    # plt.hist(generated_pop, bins=bins)
+    # plt.show()
     #get random number of calls
+    #no_calls = np.random.normal(average_no_calls,std_deviation)
     no_calls = int(random.normalvariate(average_no_calls,std_deviation))
     #print(no_calls)
     if no_calls <= 0:
@@ -34,10 +49,15 @@ def create_random_variables():
     #maybe put in a check here to make sure the random number generated is not negative
 
     #get random length of calls 
-    random_call_length2 = lognorm.rvs(s = skewness,loc= 900,scale = 1,size=no_calls)
+    random_call_length2 = lognorm.rvs(s =skewness,scale = math.exp(average_no_calls),size=no_calls)
+    #random_call_length2 = lognorm.rvs(std_deviation,size=no_calls)*np.exp(average_no_calls)
+    #print(random_call_length2)
     for call in random_call_length2:
-        if call < 0:
+        if call < 0 or math.isnan(call):
             random_call_length2[call] = 900
+        # if math.isnan(call):
+        #     print(call)
+        #     random_call_length2[call] = 900
     if (len(random_call_length2) == 0):
         random_call_length2 = [900]
     else:
@@ -45,6 +65,7 @@ def create_random_variables():
         random_call_length2 = random_call_length2 / max(random_call_length2)
         random_call_length2 = random_call_length2 * maxValue   
 
+    #print(np.mean(random_call_length2))
 
     # plt.hist(random_call_length2,30,density=True, color = 'red', alpha=0.1)
     # plt.show()
@@ -52,6 +73,8 @@ def create_random_variables():
     #put random call lengths into a list parsed into ints
     random_call_lengths_int = []
     for value in random_call_length2:
+        if math.isnan(value):
+            print(value)
         random_call_lengths_int.append(int(value)) 
         #maybe put in a check that it doesn't go over 3600 in length
 
@@ -188,19 +211,19 @@ def calculate_GOS(Ao):
     denominator +=1
     E1 = numerator/denominator
     #print("GOS %s "%(E1*100))
-    return (E1/100)
+    return (E1*100)
 
 if __name__ == "__main__":
     loop_list = []
 
     k=0
-    while k < 1000:
+    while k < 100:
         call_dictionary = create_random_variables()
         call_dur,calls,offered_traffic,GOS =simulate_calls(call_dictionary)
         loop_list.append([call_dur,calls,offered_traffic,GOS])
         k+=1
-    #call_dictionary = create_random_variables()
-    #call_dur,calls,offered_traffic,GOS =simulate_calls(call_dictionary)
+    # call_dictionary = create_random_variables()
+    # call_dur,calls,offered_traffic,GOS =simulate_calls(call_dictionary)
     results_df = pd.DataFrame.from_records(loop_list, columns=['Avg Call Duration',
                                                            'Avg No Calls',
                                                            'Avg Offered Traffic',
@@ -208,6 +231,5 @@ if __name__ == "__main__":
     print(results_df)
     print(results_df.describe())
     results_df.describe().style.format('{:,}')
-    #results_df.show()
     # calculate_GOS_erlangb()
     # calculate_GOS(20)
