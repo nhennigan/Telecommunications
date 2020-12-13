@@ -6,6 +6,7 @@ import pandas as pd
 import numpy as np
 import random
 import math
+import warnings
 
 #offered traffic
 Ao = 25
@@ -16,7 +17,7 @@ top_range = 40
 
 numValues = 1000
 maxValue = 3600
-skewness = 0.5
+skewness = 0.4
 
 average_no_calls=99
 std_deviation = 55
@@ -49,21 +50,24 @@ def create_random_variables():
     #maybe put in a check here to make sure the random number generated is not negative
 
     #get random length of calls 
-    random_call_length2 = lognorm.rvs(s =skewness,scale = math.exp(average_no_calls),size=no_calls)
+    random_call_length2 = lognorm.rvs(s =skewness,loc=average_no_calls, size=no_calls)
+
     #random_call_length2 = lognorm.rvs(std_deviation,size=no_calls)*np.exp(average_no_calls)
     #print(random_call_length2)
-    for call in random_call_length2:
-        if call < 0 or math.isnan(call):
-            random_call_length2[call] = 900
-        # if math.isnan(call):
-        #     print(call)
-        #     random_call_length2[call] = 900
     if (len(random_call_length2) == 0):
-        random_call_length2 = [900]
-    else:
+        random_call_length2 = [0.1,0.2,0.3]
+    for call in random_call_length2:
+        if call < 0 or np.isnan(call):
+            random_call_length2[call] = 0.1 
+
+    #print(random_call_lengths_int)
+    np.seterr(all='raise')
+    try:
         random_call_length2 = random_call_length2 - min(random_call_length2)
         random_call_length2 = random_call_length2 / max(random_call_length2)
         random_call_length2 = random_call_length2 * maxValue   
+    except FloatingPointError:
+        print("Invalid value caught and programme continues")
 
     #print(np.mean(random_call_length2))
 
@@ -74,7 +78,9 @@ def create_random_variables():
     random_call_lengths_int = []
     for value in random_call_length2:
         if math.isnan(value):
-            print(value)
+            #print(value)
+            random_call_lengths_int.append(900)
+            continue
         random_call_lengths_int.append(int(value)) 
         #maybe put in a check that it doesn't go over 3600 in length
 
@@ -158,9 +164,10 @@ def simulate_calls(call_dict):
 
     #print(avg_call_duration)
     avg_GOS = calculate_GOS(avg_offered_traffic)
-    return(avg_call_duration,len(call_dict),avg_offered_traffic,avg_GOS)
+    return(avg_call_duration,len(call_dict),avg_offered_traffic,avg_GOS,len(dropped_calls))
 
 def calculate_GOS_erlangb():
+    all_data= []
     iterator = bottom_range
     while iterator <= top_range:
         Ao = iterator
@@ -191,6 +198,8 @@ def calculate_GOS_erlangb():
         E1 = numerator/denominator
         #print("GOS %s "%(E1*100))
         iterator +=1
+        all_data.append([Ao,E1*100])
+    return all_data
 
 def calculate_GOS(Ao):
     #print("Offered traffic %s Erlang"%Ao)
@@ -214,22 +223,33 @@ def calculate_GOS(Ao):
     return (E1*100)
 
 if __name__ == "__main__":
-    loop_list = []
+    simulation_list = []
 
+    print("Please wait a moment while the programme executes...")
     k=0
     while k < 100:
         call_dictionary = create_random_variables()
-        call_dur,calls,offered_traffic,GOS =simulate_calls(call_dictionary)
-        loop_list.append([call_dur,calls,offered_traffic,GOS])
+        call_dur,calls,offered_traffic,GOS,dropped_calls =simulate_calls(call_dictionary)
+        simulation_list.append([call_dur,calls,offered_traffic,GOS,dropped_calls])
         k+=1
+    #print(simulation_list)
     # call_dictionary = create_random_variables()
     # call_dur,calls,offered_traffic,GOS =simulate_calls(call_dictionary)
-    results_df = pd.DataFrame.from_records(loop_list, columns=['Avg Call Duration',
+    print("\nResults from Monte deCarlo simulation. Offered traffic varied with random number of calls and varied call length.\nConstant channels = 41")
+    results_df = pd.DataFrame.from_records(simulation_list, columns=['Avg Call Duration',
                                                            'Avg No Calls',
                                                            'Avg Offered Traffic',
-                                                           'Avg GOS'])
-    print(results_df)
+                                                           'Avg GOS',
+                                                           'No Dropped Calls'])
     print(results_df.describe())
     results_df.describe().style.format('{:,}')
-    # calculate_GOS_erlangb()
-    # calculate_GOS(20)
+    
+    erlangB_list = []
+    erlangB_list = calculate_GOS_erlangb()
+    resultsB = pd.DataFrame.from_records(erlangB_list, columns=[
+                                                           'Avg Offered Traffic',
+                                                           'Avg GOS'])
+    print("\n\nResults from Erlang B formula. Offered traffic varied not taking into account individual call length or number of calls.\nConstant channels = 41")
+    print(resultsB.describe())
+    
+    
