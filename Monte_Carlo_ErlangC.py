@@ -11,7 +11,7 @@ import warnings
 #offered traffic
 Ao = 25
 #max number of calls handled
-n = 41
+n = 2
 bottom_range = 10
 top_range = 40
 
@@ -28,7 +28,7 @@ def create_random_variables():
         no_calls = 67
 
     #get random length of calls 
-    random_call_length2 = lognorm.rvs(s =skewness,loc=average_no_calls, size=20000)
+    random_call_length2 = lognorm.rvs(s =skewness,loc=average_no_calls, size=no_calls)
 
     if (len(random_call_length2) == 0):
         random_call_length2 = [0.1,0.2,0.3]
@@ -44,10 +44,10 @@ def create_random_variables():
     except FloatingPointError:
         print("Invalid value caught and programme continues")
 
-    plt.hist(random_call_length2,30,density=True, color = 'red', alpha=0.1)
-    plt.xlabel("Duration in Seconds (s)")
-    plt.ylabel("Probability of occurance")
-    plt.show()
+    # plt.hist(random_call_length2,30,density=True, color = 'red', alpha=0.1)
+    # plt.xlabel("Duration in Seconds (s)")
+    # plt.ylabel("Probability of occurance")
+    # plt.show()
 
     #put random call lengths into a list parsed into ints
     random_call_lengths_int = []
@@ -72,32 +72,71 @@ def create_random_variables():
         p+=1
     return call_dict
 
+call_dict2 = {
+    2:12,
+    5:5,
+    8:20,
+    11: 10
+}
 def simulate_calls(call_dict):
     time = 0
     simultaneous_calls=0
     dropped_calls={}
     skip_because_dropped=[]
-    while time < maxValue:
+    queued_calls = {}
+    completed_queued_calls = {}
+    while time < 50:
         for call in call_dict.items():
             if call[0] == time:
                 if simultaneous_calls < n:
+                    print("adding one to the pack")
                     simultaneous_calls +=1
                 else:
+                    queued_calls.update({call[0]+9:call[1]+9})
                     dropped_calls.update({call[0]:call[1]})
                     skip_because_dropped.append(call[0])
-
             if (call[1] + call[0]) == time:
                 if call[0] in skip_because_dropped:
                     continue
                 simultaneous_calls -=1
+            #print(len(queued_calls.items()))
+
+        for q0 in queued_calls.items():
+            # print("got in q")
+            # print(q0[0])
+            # print(q0[1])
+            if q0[0] == time:
+                if simultaneous_calls < n:
+                    print("adding one from q")
+                    simultaneous_calls +=1
+                #print((q0[0] + q0[1]))
+            if (q0[1] + q0[0]) == time:
+                print("taken a q off because done")
+                simultaneous_calls -=1
+                completed_queued_calls.update({q0[0]-9:q0[1]-9})
+
+        print("number of calls at %d seconds: %d"%(time,simultaneous_calls))
         time +=1  
+    end_q = {}
+    for d1 in queued_calls.items():
+        print(d1)
+        print(completed_queued_calls)
+        check = {d1[0]-9:d1[1]-9}
+        if completed_queued_calls.has_key(d1[0]):
+        # if d1[0] not in completed_queued_calls.keys():
+            end_q.update(check)
+    #print(completed_queued_calls)
+    print(end_q)
+    print(dropped_calls)
+    # print(queued_calls)
+    #print("no dropped: %d"%len(dropped_calls))
 
     avg_call_duration = sum(call_dict.values())/len(call_dict.values())
     avg_offered_traffic = (avg_call_duration/maxValue)*len(call_dict.values())
 
     #print(avg_call_duration)
     avg_GOS = calculate_GOS(avg_offered_traffic)
-    return(avg_call_duration,len(call_dict),avg_offered_traffic,avg_GOS,len(dropped_calls))
+    return(avg_call_duration,len(call_dict),avg_offered_traffic,avg_GOS,len(end_q))
 
 def calculate_GOS_erlangb():
     all_data= []
@@ -134,13 +173,42 @@ def calculate_GOS(Ao):
         n_factorial= n_factorial * i
         factorial_list.append(n_factorial)
         i +=1
-    numerator = (Ao**n)/factorial_list[n-1]
+    try:
+        a_add_on = n/(n-Ao)
+    except ZeroDivisionError:
+        a_add_on = 0 
+    numerator = ((Ao**n)/factorial_list[n-1]) * a_add_on
     denominator=0
     j = 1
     while j <= len(factorial_list):
         denominator +=(Ao**j)/factorial_list[j-1]
         j+=1
     denominator +=1
+    denominator += ((Ao ** n)/factorial_list[n-1] * a_add_on)
+    E1 = numerator/denominator
+    return (E1*100)
+
+def calculate_ErlangC(Ao):
+    i = 1
+    n_factorial = 1
+    factorial_list=[]
+    numerator = 0
+    while i <= n:
+        n_factorial= n_factorial * i
+        factorial_list.append(n_factorial)
+        i +=1
+    try:
+        a_add_on = n/(n-Ao)
+    except ZeroDivisionError:
+        a_add_on = 0 
+    numerator = ((Ao**n)/factorial_list[n-1]) * a_add_on
+    denominator=0
+    j = 1
+    while j <= len(factorial_list):
+        denominator +=(Ao**j)/factorial_list[j-1]
+        j+=1
+    denominator +=1
+    denominator += ((Ao ** n)/factorial_list[n-1] * a_add_on)
     E1 = numerator/denominator
     return (E1*100)
 
@@ -149,14 +217,14 @@ if __name__ == "__main__":
 
     print("Please wait a moment while the programme executes...")
     k=0
-    # while k < 1000:
-    #     call_dictionary = create_random_variables()
-    #     call_dur,calls,offered_traffic,GOS,dropped_calls =simulate_calls(call_dictionary)
-    #     simulation_list.append([call_dur,calls,offered_traffic,GOS,dropped_calls])
-    #     k+=1
+    while k < 1:
+        #call_dictionary = create_random_variables()
+        call_dur,calls,offered_traffic,GOS,dropped_calls =simulate_calls(call_dict2)
+        simulation_list.append([call_dur,calls,offered_traffic,GOS,dropped_calls])
+        k+=1
     
-    call_dictionary = create_random_variables()
-    call_dur,calls,offered_traffic,GOS,dropped_calls =simulate_calls(call_dictionary)
+    # call_dictionary = create_random_variables()
+    # call_dur,calls,offered_traffic,GOS,dropped_calls =simulate_calls(call_dictionary)
     print("\nResults from Monte deCarlo simulation. Offered traffic varied with random number of calls and varied call length.\nConstant channels = 41")
     results_df = pd.DataFrame.from_records(simulation_list, columns=['Avg Call Duration',
                                                            'Avg No Calls',

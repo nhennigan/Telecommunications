@@ -1,4 +1,5 @@
 import pandas as pd 
+import numpy as np
 
 #offered traffic
 Ao = 25
@@ -7,8 +8,8 @@ n = 41
 bottom_range = 0
 top_range = 82
 
-
-def calculate_GOS_erlangb():
+def calculate_GOS_erlangc():
+    np.seterr(all='raise')
     all_data= []
     iterator = bottom_range
     while iterator <= top_range:
@@ -21,13 +22,18 @@ def calculate_GOS_erlangb():
             n_factorial= n_factorial * i
             factorial_list.append(n_factorial)
             i +=1
-        numerator = (Ao**n)/factorial_list[n-1]
+        try:
+            a_add_on = n/(n-Ao)
+        except ZeroDivisionError:
+            a_add_on = 0 
+        numerator = ((Ao**n)/factorial_list[n-1]) * a_add_on
         denominator=0
         j = 1
         while j <= len(factorial_list):
             denominator +=(Ao**j)/factorial_list[j-1]
             j+=1
         denominator +=1
+        denominator += ((Ao ** n)/factorial_list[n-1] * a_add_on)
         E1 = numerator/denominator
         print("Offered traffic %s Erlang   GOS %s "%(iterator, E1*100))
         iterator +=1
@@ -37,7 +43,7 @@ def calculate_GOS_erlangb():
 
 if __name__ == "__main__":
     erlangB_list = []
-    erlangB_list = calculate_GOS_erlangb()
+    erlangB_list = calculate_GOS_erlangc()
     resultsB = pd.DataFrame.from_records(erlangB_list, columns=[
                                                            'Avg Offered Traffic',
                                                            'Avg GOS'])
