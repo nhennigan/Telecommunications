@@ -11,7 +11,7 @@ import warnings
 #offered traffic
 Ao = 25
 #max number of calls handled
-n = 2
+n = 41
 bottom_range = 10
 top_range = 40
 
@@ -85,14 +85,29 @@ def simulate_calls(call_dict):
     skip_because_dropped=[]
     queued_calls = {}
     completed_queued_calls = {}
-    while time < 50:
+    while time < 3600:
+
+        for q0 in queued_calls.items():
+            # print("got in q")
+            # print(q0[0])
+            # print(q0[1])
+            if q0[0] == time:
+                if simultaneous_calls < n:
+                    #print("adding one from q")
+                    simultaneous_calls +=1
+                #print((q0[0] + q0[1]))
+            if (q0[1] + q0[0]) == time:
+                #print("taken a q off because done")
+                simultaneous_calls -=1
+                completed_queued_calls.update({q0[0]-900:q0[1]-900})
+                
         for call in call_dict.items():
             if call[0] == time:
                 if simultaneous_calls < n:
-                    print("adding one to the pack")
+                    #print("adding one to the pack")
                     simultaneous_calls +=1
                 else:
-                    queued_calls.update({call[0]+9:call[1]+9})
+                    queued_calls.update({call[0]+900:call[1]+900})
                     dropped_calls.update({call[0]:call[1]})
                     skip_because_dropped.append(call[0])
             if (call[1] + call[0]) == time:
@@ -101,35 +116,27 @@ def simulate_calls(call_dict):
                 simultaneous_calls -=1
             #print(len(queued_calls.items()))
 
-        for q0 in queued_calls.items():
-            # print("got in q")
-            # print(q0[0])
-            # print(q0[1])
-            if q0[0] == time:
-                if simultaneous_calls < n:
-                    print("adding one from q")
-                    simultaneous_calls +=1
-                #print((q0[0] + q0[1]))
-            if (q0[1] + q0[0]) == time:
-                print("taken a q off because done")
-                simultaneous_calls -=1
-                completed_queued_calls.update({q0[0]-9:q0[1]-9})
+        
 
-        print("number of calls at %d seconds: %d"%(time,simultaneous_calls))
+        #print("number of calls at %d seconds: %d"%(time,simultaneous_calls))
         time +=1  
     end_q = {}
     for d1 in queued_calls.items():
-        print(d1)
-        print(completed_queued_calls)
-        check = {d1[0]-9:d1[1]-9}
-        if completed_queued_calls.has_key(d1[0]):
-        # if d1[0] not in completed_queued_calls.keys():
-            end_q.update(check)
-    #print(completed_queued_calls)
-    print(end_q)
-    print(dropped_calls)
-    # print(queued_calls)
-    #print("no dropped: %d"%len(dropped_calls))
+        #print(d1)
+        #print(completed_queued_calls)
+        #print(completed_queued_calls[0])
+        check = (d1[0]-900,d1[1]-900)
+        #print(check)
+        if check not in completed_queued_calls.items():
+                end_q.update({d1[0]-900:d1[1]-900})
+    # print("end_q")
+    # print(end_q)
+    # print("length")
+    # print(len(end_q))
+    # print("completed")
+    # print(completed_queued_calls)
+    # print("dropped")
+    # print(dropped_calls)
 
     avg_call_duration = sum(call_dict.values())/len(call_dict.values())
     avg_offered_traffic = (avg_call_duration/maxValue)*len(call_dict.values())
@@ -217,9 +224,9 @@ if __name__ == "__main__":
 
     print("Please wait a moment while the programme executes...")
     k=0
-    while k < 1:
-        #call_dictionary = create_random_variables()
-        call_dur,calls,offered_traffic,GOS,dropped_calls =simulate_calls(call_dict2)
+    while k < 1000:
+        call_dictionary = create_random_variables()
+        call_dur,calls,offered_traffic,GOS,dropped_calls =simulate_calls(call_dictionary)
         simulation_list.append([call_dur,calls,offered_traffic,GOS,dropped_calls])
         k+=1
     
