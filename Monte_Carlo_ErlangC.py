@@ -70,7 +70,7 @@ def create_random_variables():
 
         call_dict.update({time:random_call_lengths_int[p]})
         p+=1
-    return call_dict
+    return call_dict,time_between_calls
 
 call_dict2 = {
     2:12,
@@ -78,13 +78,20 @@ call_dict2 = {
     8:20,
     11: 10
 }
-def simulate_calls(call_dict):
+def simulate_calls(call_dict,time_interval):
     time = 0
     simultaneous_calls=0
     dropped_calls={}
     skip_because_dropped=[]
+    queue_stack=[]
     queued_calls = {}
     completed_queued_calls = {}
+
+    # call_dict_times = call_dict.items()
+    # print(call_dict_times)
+    # call_interval = call_dict_times[1][0] - call_dict_times[0][0]
+    # # print(call_interval)
+    #time_interval = 0
     while time < 3600:
 
         for q0 in queued_calls.items():
@@ -224,9 +231,9 @@ if __name__ == "__main__":
 
     print("Please wait a moment while the programme executes...")
     k=0
-    while k < 1000:
-        call_dictionary = create_random_variables()
-        call_dur,calls,offered_traffic,GOS,dropped_calls =simulate_calls(call_dictionary)
+    while k < 1:
+        call_dictionary,time_interval = create_random_variables()
+        call_dur,calls,offered_traffic,GOS,dropped_calls =simulate_calls(call_dictionary,time_interval)
         simulation_list.append([call_dur,calls,offered_traffic,GOS,dropped_calls])
         k+=1
     

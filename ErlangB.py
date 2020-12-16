@@ -3,9 +3,9 @@ import pandas as pd
 #offered traffic
 Ao = 25
 #max number of calls handled
-n = 41
-bottom_range = 0
-top_range = 82
+n = 11
+bottom_range = 25
+top_range = 25
 
 
 def calculate_GOS_erlangb():

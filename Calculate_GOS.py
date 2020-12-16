@@ -20,7 +20,7 @@ maxValue = 3600
 skewness = 0.5
 
 average_no_calls=99
-std_deviation = 55
+std_deviation = 27
 
 def create_random_variables():
     no_calls = int(random.normalvariate(average_no_calls,std_deviation))
@@ -28,7 +28,7 @@ def create_random_variables():
         no_calls = 67
 
     #get random length of calls 
-    random_call_length2 = lognorm.rvs(s =skewness,loc=average_no_calls, size=20000)
+    random_call_length2 = lognorm.rvs(s =skewness,loc=average_no_calls, size=no_calls)
 
     if (len(random_call_length2) == 0):
         random_call_length2 = [0.1,0.2,0.3]
@@ -44,10 +44,10 @@ def create_random_variables():
     except FloatingPointError:
         print("Invalid value caught and programme continues")
 
-    plt.hist(random_call_length2,30,density=True, color = 'red', alpha=0.1)
-    plt.xlabel("Duration in Seconds (s)")
-    plt.ylabel("Probability of occurance")
-    plt.show()
+    # plt.hist(random_call_length2,30,density=True, color = 'red', alpha=0.1)
+    # plt.xlabel("Duration in Seconds (s)")
+    # plt.ylabel("Probability of occurance")
+    # plt.show()
 
     #put random call lengths into a list parsed into ints
     random_call_lengths_int = []
@@ -149,14 +149,14 @@ if __name__ == "__main__":
 
     print("Please wait a moment while the programme executes...")
     k=0
-    # while k < 1000:
-    #     call_dictionary = create_random_variables()
-    #     call_dur,calls,offered_traffic,GOS,dropped_calls =simulate_calls(call_dictionary)
-    #     simulation_list.append([call_dur,calls,offered_traffic,GOS,dropped_calls])
-    #     k+=1
+    while k < 1000:
+        call_dictionary = create_random_variables()
+        call_dur,calls,offered_traffic,GOS,dropped_calls =simulate_calls(call_dictionary)
+        simulation_list.append([call_dur,calls,offered_traffic,GOS,dropped_calls])
+        k+=1
     
-    call_dictionary = create_random_variables()
-    call_dur,calls,offered_traffic,GOS,dropped_calls =simulate_calls(call_dictionary)
+    # call_dictionary = create_random_variables()
+    # call_dur,calls,offered_traffic,GOS,dropped_calls =simulate_calls(call_dictionary)
     print("\nResults from Monte deCarlo simulation. Offered traffic varied with random number of calls and varied call length.\nConstant channels = 41")
     results_df = pd.DataFrame.from_records(simulation_list, columns=['Avg Call Duration',
                                                            'Avg No Calls',

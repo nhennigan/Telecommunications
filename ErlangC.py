@@ -2,11 +2,11 @@ import pandas as pd
 import numpy as np
 
 #offered traffic
-Ao = 25
+Ao = 10
 #max number of calls handled
-n = 41
-bottom_range = 0
-top_range = 82
+n = 11
+bottom_range = 10
+top_range = 10
 
 def calculate_GOS_erlangc():
     np.seterr(all='raise')
@@ -21,7 +21,10 @@ def calculate_GOS_erlangc():
         while i <= n:
             n_factorial= n_factorial * i
             factorial_list.append(n_factorial)
+            #print(n)
+            #print(n_factorial)
             i +=1
+
         try:
             a_add_on = n/(n-Ao)
         except ZeroDivisionError:
@@ -29,11 +32,11 @@ def calculate_GOS_erlangc():
         numerator = ((Ao**n)/factorial_list[n-1]) * a_add_on
         denominator=0
         j = 1
-        while j <= len(factorial_list):
+        while j < len(factorial_list):
             denominator +=(Ao**j)/factorial_list[j-1]
             j+=1
         denominator +=1
-        denominator += ((Ao ** n)/factorial_list[n-1] * a_add_on)
+        denominator += (((Ao ** n)/factorial_list[n-1])* a_add_on)
         E1 = numerator/denominator
         print("Offered traffic %s Erlang   GOS %s "%(iterator, E1*100))
         iterator +=1
@@ -42,10 +45,10 @@ def calculate_GOS_erlangc():
     return all_data
 
 if __name__ == "__main__":
-    erlangB_list = []
-    erlangB_list = calculate_GOS_erlangc()
-    resultsB = pd.DataFrame.from_records(erlangB_list, columns=[
+    erlangC_list = []
+    erlangC_list = calculate_GOS_erlangc()
+    resultsC = pd.DataFrame.from_records(erlangC_list, columns=[
                                                            'Avg Offered Traffic',
                                                            'Avg GOS'])
-    print("\n\nResults from Erlang B formula. Offered traffic varied not taking into account individual call length or number of calls.\nConstant channels = 41")
-    print(resultsB.describe())
+    print("\n\nResults from Erlang C formula. Offered traffic varied not taking into account individual call length or number of calls.\nConstant channels = 41")
+    print(resultsC.describe())
