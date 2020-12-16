@@ -96,36 +96,36 @@ def simulate_calls(call_dict):
     avg_offered_traffic = (avg_call_duration/maxValue)*len(call_dict.values())
 
     #print(avg_call_duration)
-    avg_GOS = calculate_GOS(avg_offered_traffic)
+    avg_GOS = calculate_erlangB(avg_offered_traffic)
     return(avg_call_duration,len(call_dict),avg_offered_traffic,avg_GOS,len(dropped_calls))
 
-def calculate_GOS_erlangb():
-    all_data= []
-    iterator = bottom_range
-    while iterator <= top_range:
-        Ao = iterator
-        i = 1
-        n_factorial = 1
-        factorial_list=[]
-        numerator = 0
-        while i <= n:
-            n_factorial= n_factorial * i
-            factorial_list.append(n_factorial)
-            i +=1
-        numerator = (Ao**n)/factorial_list[n-1]
-        denominator=0
-        j = 1
-        while j <= len(factorial_list):
-            denominator +=(Ao**j)/factorial_list[j-1]
-            j+=1
-        denominator +=1
-        #print(denominator)
-        E1 = numerator/denominator
-        iterator +=1
-        all_data.append([Ao,E1*100])
-    return all_data
+#def calculate_GOS_erlangb():
+    # all_data= []
+    # iterator = bottom_range
+    # while iterator <= top_range:
+    #     Ao = iterator
+    #     i = 1
+    #     n_factorial = 1
+    #     factorial_list=[]
+    #     numerator = 0
+    #     while i <= n:
+    #         n_factorial= n_factorial * i
+    #         factorial_list.append(n_factorial)
+    #         i +=1
+    #     numerator = (Ao**n)/factorial_list[n-1]
+    #     denominator=0
+    #     j = 1
+    #     while j <= len(factorial_list):
+    #         denominator +=(Ao**j)/factorial_list[j-1]
+    #         j+=1
+    #     denominator +=1
+    #     #print(denominator)
+    #     E1 = numerator/denominator
+    #     iterator +=1
+    #     all_data.append([Ao,E1*100])
+    # return all_data
 
-def calculate_GOS(Ao):
+def calculate_erlangB(Ao):
     i = 1
     n_factorial = 1
     factorial_list=[]
@@ -157,7 +157,7 @@ if __name__ == "__main__":
     
     # call_dictionary = create_random_variables()
     # call_dur,calls,offered_traffic,GOS,dropped_calls =simulate_calls(call_dictionary)
-    print("\nResults from Monte deCarlo simulation. Offered traffic varied with random number of calls and varied call length.\nConstant channels = 41")
+    print("\nResults from Monte deCarlo simulation with Erlang B.\nOffered traffic varied with random number of calls and varied call length.\nConstant channels = 41")
     results_df = pd.DataFrame.from_records(simulation_list, columns=['Avg Call Duration',
                                                            'Avg No Calls',
                                                            'Avg Offered Traffic',
@@ -166,12 +166,12 @@ if __name__ == "__main__":
     print(results_df.describe())
     results_df.describe().style.format('{:,}')
     
-    erlangB_list = []
-    erlangB_list = calculate_GOS_erlangb()
-    resultsB = pd.DataFrame.from_records(erlangB_list, columns=[
-                                                           'Avg Offered Traffic',
-                                                           'Avg GOS'])
-    print("\n\nResults from Erlang B formula. Offered traffic varied not taking into account individual call length or number of calls.\nConstant channels = 41")
-    print(resultsB.describe())
+    # erlangB_list = []
+    # erlangB_list = calculate_GOS_erlangb()
+    # resultsB = pd.DataFrame.from_records(erlangB_list, columns=[
+    #                                                        'Avg Offered Traffic',
+    #                                                        'Avg GOS'])
+    # print("\n\nResults from Erlang B formula. Offered traffic varied not taking into account individual call length or number of calls.\nConstant channels = 41")
+    # print(resultsB.describe())
     
     

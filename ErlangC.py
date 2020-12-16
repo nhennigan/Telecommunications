@@ -2,13 +2,13 @@ import pandas as pd
 import numpy as np
 
 #offered traffic
-Ao = 10
+Ao = 25
 #max number of calls handled
-n = 11
-bottom_range = 10
-top_range = 10
+n = 41
+bottom_range = 6
+top_range = 50
 
-def calculate_GOS_erlangc():
+def calculate_erlangc():
     np.seterr(all='raise')
     all_data= []
     iterator = bottom_range
@@ -46,9 +46,9 @@ def calculate_GOS_erlangc():
 
 if __name__ == "__main__":
     erlangC_list = []
-    erlangC_list = calculate_GOS_erlangc()
+    erlangC_list = calculate_erlangc()
     resultsC = pd.DataFrame.from_records(erlangC_list, columns=[
                                                            'Avg Offered Traffic',
-                                                           'Avg GOS'])
+                                                           'Avg Prob Have Wait'])
     print("\n\nResults from Erlang C formula. Offered traffic varied not taking into account individual call length or number of calls.\nConstant channels = 41")
     print(resultsC.describe())
