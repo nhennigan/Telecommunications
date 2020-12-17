@@ -10,7 +10,7 @@ import warnings
 #offered traffic
 Ao = 25
 #max number of calls handled
-n = 100
+n = 41
 
 #values for random call generation
 maxValue = 3600
