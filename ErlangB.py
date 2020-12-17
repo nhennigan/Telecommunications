@@ -3,9 +3,10 @@ import pandas as pd
 #offered traffic
 Ao = 25
 #max number of calls handled
-n = 11
-bottom_range = 25
-top_range = 25
+n = 41
+#range of traffic
+bottom_range = 0
+top_range = 80
 
 
 def calculate_GOS_erlangb():
@@ -17,17 +18,21 @@ def calculate_GOS_erlangb():
         n_factorial = 1
         factorial_list=[]
         numerator = 0
+        #calculate factorial
         while i <= n:
             n_factorial= n_factorial * i
             factorial_list.append(n_factorial)
             i +=1
+        #calculate numerator
         numerator = (Ao**n)/factorial_list[n-1]
         denominator=0
         j = 1
+        #calculate denominator
         while j <= len(factorial_list):
             denominator +=(Ao**j)/factorial_list[j-1]
             j+=1
         denominator +=1
+        #calculate GOS
         E1 = numerator/denominator
         print("Offered traffic %s Erlang   GOS %s "%(iterator, E1*100))
         iterator +=1
