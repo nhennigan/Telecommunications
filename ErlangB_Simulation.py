@@ -1,3 +1,4 @@
+
 from scipy.stats import skewnorm
 from scipy.stats import lognorm
 import matplotlib.pyplot as plt
@@ -6,17 +7,23 @@ import numpy as np
 import random
 import math
 import warnings
+import itertools
 
 #offered traffic
 Ao = 25
 #max number of calls handled
 n = 41
 
-#values for random call generation
+#values for random call generation 
 maxValue = 3600
 skewness = 0.5
 average_no_calls=99
 std_deviation = 27
+
+graph_x=[]
+graph_y=[]
+graph_x2=[]
+graph_y2=[]
 
 #generate random varibales for simulation
 def create_random_variables():
@@ -64,58 +71,25 @@ def create_random_variables():
 
         call_dict.update({time:random_call_lengths_int[p]})
         p+=1
-    return call_dict,time_between_calls
+    return call_dict
 
-# call_dict2 = {
-#     2:12,
-#     5:5,
-#     8:20,
-#     11:10
-# }
 #carry out Monte Carlo Simulation
-def simulate_calls(call_dict,time_interval):
+def simulate_calls(call_dict):
+    global graph_x
+    global graph_y
     time = 0
     simultaneous_calls=0
     dropped_calls={}
     skip_because_dropped=[]
-    queued_calls = {}
-    completed_queued_calls = {}
-    requeued = {}
-    call_index=0
-
     while time < maxValue:
-        
-        sim_before_q = simulate_calls
-        q = 0
-        #attempt to add queued calls first due to FIFO
-        while q < len(queued_calls):
-            #If time = queued call start time, add it to simultaneous cal count, given there is room
-            #Otherwise add it to the requeued list and incrament its value in the queued by 1
-            if queued_calls[q][0] == time:  
-                if simultaneous_calls < n:
-                    simultaneous_calls +=1
-                    completed_queued_calls.update({queued_calls[q][0]:queued_calls[q][1]})
-                else:
-                    requeued.update({queued_calls[q][0]:queued_calls[q][1]})
-                    queued_calls[q][0]+=1
-            #If queued call end time = time, take it off simultaneous call count
-            #Check to make sure that the call has not been requeued and therefore has a new end time
-            if (queued_calls[q][0] + queued_calls[q][1]) == time:
-                if queued_calls[q][0] in requeued:
-                    continue
-                simultaneous_calls -=1
-            q+=1
-
         for call in call_dict.items():
-            #If time = call start time, add it to simultaneous calls count
+            #If time = call start time, add it to simultaneous calls count, given there is room
             #otherwise drop call and add it to dropped_calls list
             if call[0] == time:
                 if simultaneous_calls < n:
                     simultaneous_calls +=1
                 else:
-                    queued_calls[call_index] = list()
-                    queued_calls[call_index].extend((call[0]+1,call[1]+1))
-                    call_index +=1
+                    dropped_calls.update({call[0]:call[1]})
                     skip_because_dropped.append(call[0])
             #If call end time = time, take it off simultaneous call count
             #Check to make sure that call has not been dropped
@@ -124,62 +98,100 @@ def simulate_calls(call_dict,time_interval):
                     continue
                 simultaneous_calls -=1
         time +=1  
-    #number of calls left on the queue at the end of the hour   
-    end_q_length = len(queued_calls) - len(completed_queued_calls)
 
-    #get params and calculate Erlang C GOS
+    #get params and calculate Erlang B GOS
     avg_call_duration = sum(call_dict.values())/len(call_dict.values())
     avg_offered_traffic = (avg_call_duration/maxValue)*len(call_dict.values())
-    avg_GOS = calculate_erlangC(avg_offered_traffic)
+    #avg_GOS = calculate_erlangB(avg_offered_traffic)
+    avg_GOS_from_dropped = 100*len(dropped_calls)/len(call_dict)
+    # print(len(dropped_calls))
+    # print(avg_offered_traffic)
+    # print(avg_GOS_from_dropped)
+    graph_x.append(avg_offered_traffic)
+    graph_y.append(avg_GOS_from_dropped)
+    # print(graph_x)
+    # print(graph_y)
+    # plt.plot(graph_x,graph_y)
+    # plt.xlabel("Ao")
+    # plt.ylabel("GOS")
+    # plt.show()
+    return(avg_call_duration,len(call_dict),avg_offered_traffic,avg_GOS_from_dropped,len(dropped_calls))
 
-    return(avg_call_duration,len(call_dict),avg_offered_traffic,avg_GOS,end_q_length)
+# def calculate_erlangB(Ao):
+#     i = 1
+#     n_factorial = 1
+#     factorial_list=[]
+#     numerator = 0
+#     #calculate factorial
+#     while i <= n:
+#         n_factorial= n_factorial * i
+#         factorial_list.append(n_factorial)
+#         i +=1
+#     #calculate numerator
+#     numerator = (Ao**n)/factorial_list[n-1]
+#     denominator=0
+#     j = 1
+#     #calculate denominator
+#     while j <= len(factorial_list):
+#         denominator +=(Ao**j)/factorial_list[j-1]
+#         j+=1
+#     denominator +=1
+#     #calculate GOS
+#     E1 = numerator/denominator
+#     return (E1*100)
 
-def calculate_erlangC(Ao):
-    i = 1
-    n_factorial = 1
-    factorial_list=[]
-    numerator = 0
-    #calculate factorial
-    while i <= n:
-        n_factorial= n_factorial * i
-        factorial_list.append(n_factorial)
-        i +=1
-    try:
-        a_add_on = n/(n-Ao)
-    except ZeroDivisionError:
-        a_add_on = 0 
-    #calculate numerator
-    numerator = ((Ao**n)/factorial_list[n-1]) * a_add_on
-    denominator=0
-    j = 1
-    #calculate denominator
-    while j <= len(factorial_list):
-        denominator +=(Ao**j)/factorial_list[j-1]
-        j+=1
-    denominator +=1
-    denominator += ((Ao ** n)/factorial_list[n-1] * a_add_on)
-    #calculate GOS
-    E1 = numerator/denominator
-    return (E1*100)
+def calculate_GOS_erlangb(bottom_range,top_range):
+    global graph_x2
+    global graph_y2
+    all_data= []
+    iterator = bottom_range
+    while iterator <= top_range:
+        Ao = iterator
+        i = 1
+        n_factorial = 1
+        factorial_list=[]
+        numerator = 0
+        #calculate factorial
+        while i <= n:
+            n_factorial= n_factorial * i
+            factorial_list.append(n_factorial)
+            i +=1
+        #calculate numerator
+        numerator = (Ao**n)/factorial_list[n-1]
+        denominator=0
+        j = 1
+        #calculate denominator
+        while j <= len(factorial_list):
+            denominator +=(Ao**j)/factorial_list[j-1]
+            j+=1
+        denominator +=1
+        #calculate GOS
+        E1 = numerator/denominator
+        #print("Offered traffic %s Erlang   GOS %s "%(iterator, E1*100))
+        iterator +=1
+        all_data.append([Ao,E1*100])
+        graph_x2.append(Ao)
+        graph_y2.append(E1*100)
+        
+    return all_data
 
 if __name__ == "__main__":
     simulation_list = []
-    graph_x=[]
-    graph_y=[]
+    # graph_x=[]
+    # graph_y=[]
+
     print("Please wait a moment while the programme executes...")
+
     k=0
-    while k < 5:
-        call_dictionary,time_interval = create_random_variables()
-        call_dur,calls,offered_traffic,GOS,dropped_calls =simulate_calls(call_dictionary,time_interval)
-        graph_x.append(offered_traffic)
-        graph_y.append(GOS)
+    while k < 1000:
+        call_dictionary = create_random_variables()
+        call_dur,calls,offered_traffic,GOS,dropped_calls =simulate_calls(call_dictionary)
+        #graph_x.append(offered_traffic)
+        #graph_y.append(GOS)
         simulation_list.append([call_dur,calls,offered_traffic,GOS,dropped_calls])
         k+=1
-   
-    xs, ys = zip(*sorted(zip(graph_x, graph_y)))
-    plt.plot(xs,ys)
-    plt.show()
-    print("\nResults from Monte deCarlo simulation. Offered traffic varied with random number of calls and varied call length.\nConstant channels = 41")
+    
+    print("\nResults from Monte deCarlo simulation with Erlang B.\nOffered traffic varied with random number of calls and varied call length.\nConstant channels = 41")
     results_df = pd.DataFrame.from_records(simulation_list, columns=['Avg Call Duration',
                                                            'Avg No Calls',
                                                            'Avg Offered Traffic',
@@ -187,4 +199,12 @@ if __name__ == "__main__":
                                                            'Avg No Dropped Calls'])
     print(results_df.describe())
     results_df.describe().style.format('{:,}')
+
+    xs, ys = zip(*sorted(zip(graph_x, graph_y)))
+
+
+    calculate_GOS_erlangb(results_df['Avg Offered Traffic'].min(),results_df['Avg Offered Traffic'].max())
+    plt.plot(graph_x2,graph_y2)
+    plt.plot(xs,ys)
+    plt.show()
     

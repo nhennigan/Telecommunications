@@ -1,15 +1,19 @@
 import pandas as pd 
+import matplotlib.pyplot as plt
 
 #offered traffic
 Ao = 25
 #max number of calls handled
 n = 41
 #range of traffic
-bottom_range = 0
-top_range = 80
-
+bottom_range = 3
+top_range = 55
+graph_x=[]
+graph_y=[]
 
 def calculate_GOS_erlangb():
+    global graph_x
+    global graph_y
     all_data= []
     iterator = bottom_range
     while iterator <= top_range:
@@ -34,9 +38,11 @@ def calculate_GOS_erlangb():
         denominator +=1
         #calculate GOS
         E1 = numerator/denominator
-        print("Offered traffic %s Erlang   GOS %s "%(iterator, E1*100))
+        #print("Offered traffic %s Erlang   GOS %s "%(iterator, E1*100))
         iterator +=1
         all_data.append([Ao,E1*100])
+        graph_x.append(Ao)
+        graph_y.append(E1*100)
         
     return all_data
 
@@ -48,3 +54,10 @@ if __name__ == "__main__":
                                                            'Avg GOS'])
     print("\n\nResults from Erlang B formula. Offered traffic varied not taking into account individual call length or number of calls.\nConstant channels = 41")
     print(resultsB.describe())
+
+    print(graph_x)
+    print(graph_y)
+    plt.plot(graph_x,graph_y)
+    plt.xlabel("Ao")
+    plt.ylabel("GOS")
+    plt.show()
