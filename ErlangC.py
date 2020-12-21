@@ -7,8 +7,8 @@ Ao = 25
 #max number of calls handled
 n = 41
 #range of traffic
-bottom_range = 1
-top_range = 40
+bottom_range = 4
+top_range = 53
 graph_x=[]
 graph_y=[]
 
