@@ -9,40 +9,35 @@ import statistics
 
 #max number of calls handled
 n = 41
-#no_calls = 99
 #values for random call generation 
-maxValue = 3600
-skewness = 0.5
-average_no_calls=99
-std_deviation = 27
-
-#graph_x,graph_y=[],[]
-# graph_y=[]
-# graph_x2=[]
-# graph_y2=[]
+maxValue, skewness, average_no_calls, std_deviation= 3600,0.5,99,27
+# skewness = 0.5
+# average_no_calls=99
+# std_deviation = 27
 
 
 calls_list=[40,44,48,52,56,60,64,68,72,76,80,84,88,92,96,100,104,108,112,116,120,124,128,132,136,140,144,148,152,156,160]
-#calls_list=[40,44,48,52,56]
-traffic_list=[10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40]
+
 #generate random varibales for simulation
 def create_random_variables(no_calls):
 
     #generate random start times
-    random_call_start_times = np.random.random_sample(size = no_calls)
-    random_call_start_times = random_call_start_times*3600
-
+    random_call_start_times = np.random.random_sample(size = no_calls)*3600
 
     #get random length of calls 
     #random_call_length2 = lognorm.rvs(s =skewness,loc=average_no_calls, size=no_calls)
     random_call_length2 = np.random.random_sample(size = no_calls)
-    #print(random_call_length2)
-    c = 0
-    while c < len(random_call_length2):
-        x = 1 - random_call_length2[c]
-        random_call_length2[c] = math.log(x)/ -(1/900)
-        c+=1
     
+    random_call_length2=[math.log(1-random_call_length2[c])/ -(1/900) for c in range(0,len(random_call_length2))]
+    # c = 0
+    # while c < len(random_call_length2):
+    #     x = 1 - random_call_length2[c]
+    #     random_call_length2[c] = math.log(x)/ -(1/900)
+    #     c+=1
+    # print(random_call_length2)
+    
+    
+    # print(random_call_length3)
     #checks to make sure call length is ok
     if (len(random_call_length2) == 0):
         random_call_length2 = [0.1]
@@ -51,13 +46,13 @@ def create_random_variables(no_calls):
             random_call_length2[call] = 0.1 
 
     #normalise data between 0-3600 seconds
-    # np.seterr(all='raise')
+    np.seterr(all='raise')
     # try:
-        # random_call_length2 = random_call_length2 - min(random_call_length2)
-        # random_call_length2 = random_call_length2 / max(random_call_length2)
-        # random_call_length2 = random_call_length2 * maxValue   
+    #     random_call_length2 = random_call_length2 - min(random_call_length2)
+    #     random_call_length2 = random_call_length2 / max(random_call_length2)
+    #     random_call_length2 = random_call_length2 * maxValue   
     # except FloatingPointError:
-        # print("Invalid value caught and programme continues")
+    #     print("Invalid value caught and programme continues")
 
     #put random call lengths into a list parsed into ints
     # random_call_lengths_int = []
@@ -73,15 +68,9 @@ def create_random_variables(no_calls):
     # plt.ylabel("Probability of occurance")
     # plt.show()
 
-    #p = 0
     call_dict = {int(random_call_start_times[p]):int(random_call_length2[p]) for p in range(0,no_calls)}
     #assign call length to call start time
-    #call_dict = {}
-    # while p < no_calls:
-        # call_dict.update({int(random_call_start_times[p]):random_call_lengths_int[p]})
-        #p+=1
-    #print(call_dict)
-    #print(statistics.mean(random_call_length2))
+
     return call_dict
 
 
@@ -159,33 +148,33 @@ if __name__ == "__main__":
     print("Please wait a moment while the programme executes...")
     graph_x,graph_y,GOS_stdev=[],[],[]
   
-    for no_calls in calls_list:
-        k=0
-        Ao_list=[]
-        call_GOS = []
-        while k < 100:
-            call_dictionary = create_random_variables(no_calls)
-            offered_traffic,GOS =simulate_calls(call_dictionary)
-            Ao_list.append(offered_traffic)
-            call_GOS.append(GOS)
-            k+=1
-        graph_x.append(statistics.mean(Ao_list))
-        graph_y.append(statistics.mean(call_GOS))
-        GOS_stdev.append(statistics.stdev(call_GOS))
+    # for no_calls in calls_list:
+    #     k=0
+    #     Ao_list=[]
+    #     call_GOS = []
+    #     while k < 100:
+    #         call_dictionary = create_random_variables(no_calls)
+    #         offered_traffic,GOS =simulate_calls(call_dictionary)
+    #         Ao_list.append(offered_traffic)
+    #         call_GOS.append(GOS)
+    #         k+=1
+    #     graph_x.append(statistics.mean(Ao_list))
+    #     graph_y.append(statistics.mean(call_GOS))
+    #     GOS_stdev.append(statistics.stdev(call_GOS))
     
     x,y = calculate_GOS_erlangb(10,40)
 
     plt.plot(x,y,label="Erlang B Formula")
 
-    plt.plot(graph_x,graph_y,label="Monte Carlo Simulation")
-    plus_stdev = [graph_y[l]+ 2*GOS_stdev[l] for l in range (0,len(GOS_stdev))]
-    minus_stdev = [graph_y[l]- 2*GOS_stdev[l] if graph_y[l]- 2*GOS_stdev[l] >=0 else 0 for l in range (0,len(GOS_stdev))]
-    plt.plot(graph_x,plus_stdev,label="Simulation +2 stdev")
-    plt.plot(graph_x,minus_stdev,label="Simulation -2 stdev")
+    # plt.plot(graph_x,graph_y,label="Monte Carlo Simulation")
+    # plus_stdev = [graph_y[l]+ GOS_stdev[l] for l in range (0,len(GOS_stdev))]
+    # minus_stdev = [graph_y[l]- GOS_stdev[l] if graph_y[l]- 2*GOS_stdev[l] >=0 else 0 for l in range (0,len(GOS_stdev))]
+    # plt.plot(graph_x,plus_stdev,label="Simulation +1 stdev",linestyle='--')
+    # plt.plot(graph_x,minus_stdev,label="Simulation -1 stdev",linestyle='--')
 
-    plt.xlabel("Ao")
-    plt.ylabel("GOS")
-    plt.title("Erlang B formula Vs Simulation with Lognormal Distribution of Call Lengths")
+    plt.xlabel("Ao (Erlangs)")
+    plt.ylabel("GOS %")
+    #plt.title("Erlang B formula Vs Simulation with Lognormal Distribution of Call Lengths")
     plt.title("Erlang B formula Vs Simulation with Decaing Exponential Distribution of Call Lengths")
     plt.legend(loc='upper left')
     plt.show()
